@@ -1,0 +1,23 @@
+# --- Core ---
+pandas
+numpy
+yfinance
+requests
+
+# --- ML / Feature Engineering ---
+scikit-learn
+xgboost
+joblib
+ta
+
+# --- Visualization ---
+plotly
+matplotlib
+
+# --- UI / Dashboard ---
+streamlit
+
+# --- Performance & Utilities ---
+pydantic
+python-dotenv
+loguru
