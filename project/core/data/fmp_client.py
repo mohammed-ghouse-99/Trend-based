@@ -14,7 +14,7 @@ class FMPClient:
     Provides structured methods to fetch financial statements and company profiles.
     """
     
-    BASE_URL = "https://financialmodelingprep.com/api/v3"
+    BASE_URL = "https://financialmodelingprep.com/stable"
     
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.getenv("FMP_API_KEY")
@@ -48,12 +48,12 @@ class FMPClient:
 
     def fetch_income_statement(self, symbol: str, limit: int = 1) -> Optional[List[Dict[str, Any]]]:
         """Fetch historical income statements."""
-        return self._get(f"income-statement/{symbol.upper()}", {"limit": limit})
+        return self._get(f"income-statement?symbol={symbol.upper()}&limit={limit}")
 
     def fetch_balance_sheet(self, symbol: str, limit: int = 1) -> Optional[List[Dict[str, Any]]]:
         """Fetch historical balance sheet statements."""
-        return self._get(f"balance-sheet-statement/{symbol.upper()}", {"limit": limit})
+        return self._get(f"balance-sheet-statement?symbol={symbol.upper()}&limit={limit}")
 
     def fetch_profile(self, symbol: str) -> Optional[List[Dict[str, Any]]]:
         """Fetch company profile (description, sector, industry, mktCap)."""
-        return self._get(f"profile/{symbol.upper()}")
+        return self._get(f"profile?symbol={symbol.upper()}")

@@ -27,6 +27,7 @@ from project.visual.charts import (
     plot_volume, plot_renko,
 )
 from project.core.halal.pipeline import screen_stock
+from project.data.providers.financial_service import FinancialService
 
 app = FastAPI()
 _TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "templates")
@@ -54,7 +55,38 @@ def verify_token(token: str) -> bool:
     except JWTError:
         return False
 
+_fin_service_api = FinancialService()
+
 def get_company_info(ticker_symbol: str):
+    try:
+        data = _fin_service_api.get_financial_data(ticker_symbol)
+        if data:
+            profile = None
+            try:
+                from project.data.providers.provider_factory import ProviderFactory
+                factory = ProviderFactory()
+                provider = factory.get_primary_provider()
+                if provider:
+                    profile = provider.get_company_profile(ticker_symbol)
+            except Exception:
+                pass
+            return {
+                "name": data.company_name or ticker_symbol,
+                "sector": data.sector or "N/A",
+                "industry": data.industry or "N/A",
+                "exchange": (profile or {}).get("exchange", "N/A") if profile else "N/A",
+                "logo_url": (profile or {}).get("image", "") if profile else "",
+                "website": (profile or {}).get("website", "") if profile else "",
+                "summary": data.description or "",
+                "market_cap": data.market_cap,
+                "country": (profile or {}).get("country", "N/A") if profile else "N/A",
+            }
+        return _fallback_company_info_api(ticker_symbol)
+    except Exception:
+        return _fallback_company_info_api(ticker_symbol)
+
+
+def _fallback_company_info_api(ticker_symbol: str):
     import yfinance as yf
     try:
         t = yf.Ticker(ticker_symbol)

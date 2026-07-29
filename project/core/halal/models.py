@@ -10,6 +10,7 @@ class StockData:
     sector: str = ""
     industry: str = ""
     business_description: str = ""
+    description: str = ""
     
     marketCap: float = 0.0
     totalDebt: float = 0.0
@@ -21,6 +22,12 @@ class StockData:
     cash: float = 0.0
     receivables: float = 0.0
     totalAssets: float = 0.0
+
+    def __post_init__(self):
+        if not self.description and self.business_description:
+            self.description = self.business_description
+        elif not self.business_description and self.description:
+            self.business_description = self.description
 
 @dataclass
 class ScreenResult:

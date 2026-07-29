@@ -9,8 +9,6 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 import streamlit.components.v1 as components
-import yfinance as yf
-
 from project.app.login import show_login
 from project.app.ui_utils import load_css, render_decision_banner, render_halal_scorecard
 
@@ -52,6 +50,7 @@ from project.visual.charts import (
     render_price_chart,
 )
 from project.core.halal.pipeline import screen_stock
+from project.data.providers.financial_service import FinancialService
 
 # Path to trained model (created by project/main.py)
 MODEL_PATH = "project/models/model.pkl"
@@ -554,8 +553,41 @@ def load_or_fetch(ticker: str, period: str, interval: str, use_cache: bool, refr
     save_cache(df, ticker, period, interval)
     return df
 
+_fin_service = FinancialService()
+
 def get_company_info(ticker_symbol: str):
     try:
+        data = _fin_service.get_financial_data(ticker_symbol)
+        if data:
+            profile = None
+            try:
+                from project.data.providers.provider_factory import ProviderFactory
+                factory = ProviderFactory()
+                provider = factory.get_primary_provider()
+                if provider:
+                    profile = provider.get_company_profile(ticker_symbol)
+            except Exception:
+                pass
+
+            return {
+                'name': data.company_name or ticker_symbol,
+                'sector': data.sector or 'N/A',
+                'industry': data.industry or 'N/A',
+                'exchange': (profile or {}).get('exchange', 'N/A') if profile else 'N/A',
+                'logo_url': (profile or {}).get('image', '') if profile else '',
+                'website': (profile or {}).get('website', '') if profile else '',
+                'summary': data.description or '',
+                'market_cap': data.market_cap,
+                'country': (profile or {}).get('country', 'N/A') if profile else 'N/A',
+            }
+        return _fallback_company_info(ticker_symbol)
+    except Exception:
+        return _fallback_company_info(ticker_symbol)
+
+
+def _fallback_company_info(ticker_symbol: str):
+    try:
+        import yfinance as yf
         t = yf.Ticker(ticker_symbol)
         info = t.info
         return {
@@ -567,11 +599,11 @@ def get_company_info(ticker_symbol: str):
             'website': info.get('website', ''),
             'summary': info.get('longBusinessSummary', ''),
             'market_cap': info.get('marketCap'),
-            'country': info.get('country', 'N/A')
+            'country': info.get('country', 'N/A'),
         }
     except Exception:
-        return {'name': ticker_symbol, 'sector':'N/A','industry':'N/A','exchange':'N/A',
-                'logo_url':'','website':'','summary':'','market_cap':None,'country':'N/A'}
+        return {'name': ticker_symbol, 'sector': 'N/A', 'industry': 'N/A', 'exchange': 'N/A',
+                'logo_url': '', 'website': '', 'summary': '', 'market_cap': None, 'country': 'N/A'}
 
 def load_trained_model(model_path: str):
     if not os.path.exists(model_path):
