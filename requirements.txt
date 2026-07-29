@@ -24,3 +24,4 @@ python-multipart
 pydantic
 python-dotenv
 loguru
+uvicorn[standard]==0.34.0
