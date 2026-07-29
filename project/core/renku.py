@@ -334,5 +334,5 @@ def detect_renko_trend(df: pd.DataFrame, brick_size_method: str = "atr") -> Dict
 
 if __name__ == "__main__":
     # Quick test
-    print("✅ RenkoDetector with timestamps is ready!")
-    print("✅ Each brick now has: direction, price, timestamp")
+    print(" RenkoDetector with timestamps is ready!")
+    print(" Each brick now has: direction, price, timestamp")

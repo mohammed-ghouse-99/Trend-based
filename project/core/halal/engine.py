@@ -183,7 +183,7 @@ class HalalEngine:
         logger.info("=== Financial Completeness Report for %s ===", sym)
         for k in field_keys:
             val = stock.get(k)
-            mark = "✅" if val is not None and val != "" else "❌"
+            mark = "" if val is not None and val != "" else ""
             logger.info("  %-20s %s", k, mark)
         logger.info("Completeness: %d / %d fields (%.0f%%)", present_count, total_fields, completeness * 100)
         logger.info("Status: %s", status)

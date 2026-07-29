@@ -22,7 +22,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report
 import pickle
 
-# ✅ Correct imports (project is a package)
+#  Correct imports (project is a package)
 from project.data.collector import get_data
 from project.data.processor import add_indicators
 
@@ -51,18 +51,18 @@ def train_model(ticker: str = "AAPL") -> None:
         print(" Error: No data fetched. Check ticker or internet.")
         return
 
-    print(f"✔ Retrieved {len(df)} rows of raw OHLCV data")
+    print(f" Retrieved {len(df)} rows of raw OHLCV data")
 
     # ---- STEP 2: Add ALL technical indicators (processor.py) ----
     print(" Adding indicators...")
     df_ind = add_indicators(df, dropna=True)
-    print(f"✔ Indicators added. Final rows: {len(df_ind)}")
+    print(f" Indicators added. Final rows: {len(df_ind)}")
     # At this stage df_ind has:
     # OHLCV + Adj Close (from collector) + SMA/EMA/RSI/MACD/ATR/etc
 
     # ---- STEP 3: Add Target (label) ----
     df_ind = add_target(df_ind)
-    print(f"✔ Target column added. Rows after target dropna: {len(df_ind)}")
+    print(f" Target column added. Rows after target dropna: {len(df_ind)}")
 
     # ---- STEP 4: Define feature set (rich, ML-focused) ----
     # These names MUST match columns created in processor.py
@@ -92,14 +92,14 @@ def train_model(ticker: str = "AAPL") -> None:
     # safety check: make sure all these columns exist
     missing = [c for c in FEATURE_COLS if c not in df_ind.columns]
     if missing:
-        print(f"❌ Missing required feature columns: {missing}")
+        print(f" Missing required feature columns: {missing}")
         print("   Available columns:", list(df_ind.columns))
         return
 
     X = df_ind[FEATURE_COLS].astype(float)
     y = df_ind["Target"].astype(int)
 
-    print(f"\n📊 Dataset shape → X: {X.shape}, y: {y.shape}")
+    print(f"\n Dataset shape → X: {X.shape}, y: {y.shape}")
     print(f"   Class balance (0=DOWN, 1=UP):")
     print(y.value_counts(normalize=True).rename("proportion"))
 
@@ -115,7 +115,7 @@ def train_model(ticker: str = "AAPL") -> None:
     )
 
     # ---- STEP 6: Train RandomForest ----
-    print("\n🚀 Training RandomForest model...")
+    print("\n Training RandomForest model...")
     model = RandomForestClassifier(
         n_estimators=300,   # more trees → more stable
         max_depth=10,      # deeper trees → capture non-linear trends
@@ -127,9 +127,9 @@ def train_model(ticker: str = "AAPL") -> None:
     # ---- STEP 7: Evaluate ----
     preds = model.predict(X_test)
     acc = accuracy_score(y_test, preds)
-    print(f"\n🎯 Model Accuracy: {acc:.4f}")
+    print(f"\n Model Accuracy: {acc:.4f}")
 
-    print("\n📋 Classification Report:")
+    print("\n Classification Report:")
     print(classification_report(y_test, preds, digits=4))
 
     # ---- STEP 8: Save model + feature list ----
@@ -144,8 +144,8 @@ def train_model(ticker: str = "AAPL") -> None:
     with open(model_path, "wb") as f:
         pickle.dump(payload, f)
 
-    print(f"\n💾 Model saved to: {model_path}")
-    print("✅ TRAINING COMPLETE")
+    print(f"\n Model saved to: {model_path}")
+    print(" TRAINING COMPLETE")
 
 
 # =========================================

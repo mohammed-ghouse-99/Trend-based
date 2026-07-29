@@ -15,7 +15,7 @@ def show_login():
 
     st.set_page_config(
         page_title="Trend-Based Halal Trading System",
-        page_icon="⬡",
+        page_icon="",
         layout="wide"
     )
     
@@ -389,7 +389,7 @@ def show_login():
         # ── LOGO + HEADLINE ──
         st.markdown("""
         <div class="logo-mark">
-          <div class="hex-icon">⬡</div>
+          <div class="hex-icon"></div>
           <div class="brand-name">APE<span>X</span></div>
         </div>
         <div class="headline">AI-Powered Trend Intelligence Platform</div>
@@ -413,10 +413,10 @@ def show_login():
             if submitted:
                 if authenticate(username, password):
                     st.session_state["authenticated"] = True
-                    st.success("✓ Authentication successful — loading markets…")
+                    st.success(" Authentication successful — loading markets…")
                     st.rerun()
                 else:
-                    st.error("⚠ Access denied. Invalid credentials.")
+                    st.error(" Access denied. Invalid credentials.")
 
         # ── STATS ROW ──
         st.markdown("""
@@ -454,7 +454,7 @@ def show_login():
 # DASHBOARD (placeholder)
 # -------------------------------------------
 def show_dashboard():
-    st.title("📈 Dashboard")
+    st.title(" Dashboard")
     st.write("Welcome, trader.")
     if st.button("Logout"):
         st.session_state["authenticated"] = False

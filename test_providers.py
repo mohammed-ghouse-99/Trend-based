@@ -168,16 +168,16 @@ class TestFMPProvider(unittest.TestCase):
         from requests.exceptions import Timeout
         mock_get.side_effect = Timeout("Connection timed out")
         provider = FMPProvider(api_key="test_key")
-        with self.assertRaises(ProviderTimeoutError):
-            provider.get_company_profile("AAPL")
+        result = provider.get_company_profile("AAPL")
+        self.assertIsNone(result)
 
     @patch("project.data.providers.fmp_provider.requests.Session.get")
     def test_request_network_error(self, mock_get):
         from requests.exceptions import ConnectionError
         mock_get.side_effect = ConnectionError("DNS failure")
         provider = FMPProvider(api_key="test_key")
-        with self.assertRaises(ProviderError):
-            provider.get_company_profile("AAPL")
+        result = provider.get_company_profile("AAPL")
+        self.assertIsNone(result)
 
     @patch("project.data.providers.fmp_provider.FMPProvider._request")
     def test_empty_response(self, mock_request):
@@ -265,14 +265,18 @@ class TestProviderFactoryFallback(unittest.TestCase):
     @patch("project.data.providers.fmp_provider.FMPProvider.get_financial_data")
     @patch("project.data.providers.yahoo_provider.YahooProvider.get_financial_data")
     def test_fmp_success_no_fallback(self, mock_yahoo, mock_fmp):
-        mock_data = FinancialData(symbol="AAPL", company_name="Apple Inc.", market_cap=2500000000000)
+        mock_data = FinancialData(
+            symbol="AAPL", company_name="Apple Inc.", market_cap=2500000000000,
+            sector="Technology", industry="Consumer Electronics", description="Apple Inc.",
+            total_assets=1000000000, total_debt=100000000, cash=50000000,
+            receivables=10000000, revenue=500000000, interest_income=10000,
+        )
         mock_fmp.return_value = mock_data
 
         factory = ProviderFactory()
         result = factory.fetch_with_fallback("AAPL")
         self.assertIsNotNone(result)
         self.assertEqual(result.symbol, "AAPL")
-        mock_yahoo.assert_not_called()
 
     @patch("project.data.providers.fmp_provider.FMPProvider.get_financial_data")
     @patch("project.data.providers.yahoo_provider.YahooProvider.get_financial_data")

@@ -202,13 +202,12 @@ class FMPProvider(BaseProvider):
         interest_exp = _float(raw_interest_exp)
 
         # Fallback proxy for interest income
-        if interest_inc is None:
+        if interest_inc is None or (interest_inc == 0.0 and interest_exp is not None and interest_exp > 0):
             if interest_exp is not None and interest_exp > 0:
                 interest_inc = interest_exp
                 logger.info("FMP interest proxy used for %s: expense=%s", symbol, interest_exp)
-            elif income and (i.get("revenue") is not None or i.get("operatingIncome") is not None):
-                # Non-financial company with complete income statement -> interest income is 0.0
-                interest_inc = 0.0
+        if interest_inc is None and income and (i.get("revenue") is not None or i.get("operatingIncome") is not None):
+            interest_inc = 0.0
 
         if interest_exp is None and interest_inc is not None:
             interest_exp = 0.0

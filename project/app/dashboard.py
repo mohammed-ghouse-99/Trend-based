@@ -14,7 +14,7 @@ from project.app.ui_utils import load_css, render_decision_banner, render_halal_
 
 st.set_page_config(
     page_title="Trend-Based Halal Stock Prediction System",
-    page_icon="⬡",
+    page_icon="",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -499,7 +499,7 @@ now_str = datetime.now().strftime("%d %b %Y  %H:%M")
 st.markdown(f"""
 <div class="apex-header fade-in">==
   <div class="apex-brand">
-    <div class="apex-hex">⬡</div>
+    <div class="apex-hex"></div>
     <div>
       <div class="apex-wordmark">Trend-Based<span></span> Halal Stock Prediction System</div>
     </div>
@@ -514,7 +514,7 @@ st.markdown(f"""
 # --------------------------------------------------------------------
 # INPUT BAR
 # --------------------------------------------------------------------
-st.markdown('<div class="section-label">⬡ &nbsp;Market Parameters</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-label"> &nbsp;Market Parameters</div>', unsafe_allow_html=True)
 
 col1, col2, col3, col4, col5, col6, col7 = st.columns([1.4, 1, 1, 1.2, 0.9, 0.9, 1.0])
 
@@ -536,7 +536,7 @@ with col6:
 with col7:
     check_halal = st.checkbox("Halal Screen", value=True)
 
-analyze = st.button("⬡  Analyze", width="stretch", type="primary")
+analyze = st.button("  Analyze", width="stretch", type="primary")
 
 # --------------------------------------------------------------------
 # HELPERS: DATA / MODEL  (UNCHANGED LOGIC)
@@ -548,7 +548,7 @@ def load_or_fetch(ticker: str, period: str, interval: str, use_cache: bool, refr
             return cached
     df = get_data(ticker, period, interval)
     if df is None or df.empty:
-        st.error("⬡ No data returned. Check ticker or internet.")
+        st.error(" No data returned. Check ticker or internet.")
         return None
     save_cache(df, ticker, period, interval)
     return df
@@ -692,7 +692,7 @@ def make_gauge(title, action_value, subtitle=""):
 # MAIN ACTION: Analyze  (ALL LOGIC PRESERVED)
 # --------------------------------------------------------------------
 if analyze:
-    with st.spinner("⬡ Processing market data…"):
+    with st.spinner(" Processing market data…"):
 
         company_info = get_company_info(ticker)
 
@@ -810,7 +810,7 @@ if analyze:
         except Exception as e:
             st.error(f"Chart Error: {e}")
 
-        with st.expander("⬡  Audit Metadata & Raw Source", expanded=False):
+        with st.expander("  Audit Metadata & Raw Source", expanded=False):
             st.dataframe(df_raw, width="stretch")
             st.caption(f"Strategy Lookback: {lookback_bars} bars | Interval: {interval}")
 
@@ -819,7 +819,7 @@ if analyze:
         if check_halal:
             render_halal_scorecard(halal_res)
             
-            with st.expander("⚠️ Audit Notes", expanded=False):
+            with st.expander(" Audit Notes", expanded=False):
                 violations = halal_res.get("violations", [])
                 for v in violations: st.error(f"Fail: {v}")
                 notes_list = halal_res.get("notes", [])
@@ -829,27 +829,27 @@ if analyze:
         st.markdown('<div class="card-divider"></div>', unsafe_allow_html=True)
 
         # Technical Signals
-        st.markdown('<div class="card-section-title">⬡ &nbsp;Market context</div>', unsafe_allow_html=True)
+        st.markdown('<div class="card-section-title"> &nbsp;Market context</div>', unsafe_allow_html=True)
         
         # Trend
         if trend == "UPTREND": 
-            st.success(f"▲ BULLISH SIGNAL (Conf: {trend_result.get('confidence', 0):.2f})")
+            st.success(f" BULLISH SIGNAL (Conf: {trend_result.get('confidence', 0):.2f})")
         elif trend == "DOWNTREND":
-            st.error(f"▼ BEARISH SIGNAL (Conf: {trend_result.get('confidence', 0):.2f})")
+            st.error(f" BEARISH SIGNAL (Conf: {trend_result.get('confidence', 0):.2f})")
         else:
-            st.warning(f"◆ NEUTRAL / SIDEWAYS")
+            st.warning(f" NEUTRAL / SIDEWAYS")
 
         # ML
         if ml_pred == 1:
-            st.success(f"🚀 ML: UP PROBABILITY ({ml_conf:.0%})")
+            st.success(f" ML: UP PROBABILITY ({ml_conf:.0%})")
         else:
-            st.info(f"⚖️ ML: NO UP SIGNAL ({ml_conf:.0%})")
+            st.info(f" ML: NO UP SIGNAL ({ml_conf:.0%})")
 
         # Renko
         if renko_trend == "UPTREND":
-            st.success(f"🧱 RENKO: {renko_total_bricks} UP BRICKS")
+            st.success(f" RENKO: {renko_total_bricks} UP BRICKS")
         elif renko_trend == "DOWNTREND":
-            st.error(f"🧱 RENKO: {renko_total_bricks} DOWN BRICKS")
+            st.error(f" RENKO: {renko_total_bricks} DOWN BRICKS")
 
         st.markdown('<div class="card-divider"></div>', unsafe_allow_html=True)
         
@@ -865,7 +865,7 @@ if analyze:
 
     # ── TECHNICAL SUMMARY ──────────────────────────────────────────
     st.markdown('<hr>', unsafe_allow_html=True)
-    st.markdown('<div class="section-label">⬡ &nbsp;Technical Summary</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-label"> &nbsp;Technical Summary</div>', unsafe_allow_html=True)
 
     last = df_proc.iloc[-1]
     close_price = float(last["Close"]) if "Close" in last else np.nan
@@ -941,12 +941,12 @@ if analyze:
     st.markdown('<hr>', unsafe_allow_html=True)
     tcol1, tcol2 = st.columns([1.4, 1])
     with tcol1:
-        st.markdown('<div class="section-label">⬡ &nbsp;Oscillators</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-label"> &nbsp;Oscillators</div>', unsafe_allow_html=True)
         df_osc = pd.DataFrame(osc_items, columns=["Indicator","Value","Signal"])
         df_osc["Value"] = df_osc["Value"].apply(lambda v: f"{v:.4f}" if pd.notna(v) and isinstance(v,(float,int)) else v)
         st.dataframe(df_osc, width="stretch", hide_index=True)
     with tcol2:
-        st.markdown('<div class="section-label">⬡ &nbsp;Moving Averages</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-label"> &nbsp;Moving Averages</div>', unsafe_allow_html=True)
         df_ma_df = pd.DataFrame(ma_items, columns=["MA","Value","Signal"])
         df_ma_df["Value"] = df_ma_df["Value"].apply(lambda v: f"{v:.4f}" if pd.notna(v) and isinstance(v,(float,int)) else v)
         st.dataframe(df_ma_df, width="stretch", hide_index=True)
@@ -954,7 +954,7 @@ if analyze:
     # ── TABS ───────────────────────────────────────────────────────
     st.markdown('<hr>', unsafe_allow_html=True)
     tab_overview, tab_charts, tab_renko, tab_data = st.tabs(
-        ["⬡  Overview","⬡  Charts","⬡  Renko","⬡  Data"]
+        ["  Overview","  Charts","  Renko","  Data"]
     )
 
     CHART_CONFIG = {
@@ -963,7 +963,7 @@ if analyze:
     }
 
     with tab_overview:
-        st.markdown('<div class="section-label">⬡ &nbsp;Instrument Summary</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-label"> &nbsp;Instrument Summary</div>', unsafe_allow_html=True)
         st.markdown(f"""
         | Field | Value |
         |---|---|
@@ -977,7 +977,7 @@ if analyze:
         | **Last Close** | `{last_close:,.2f}` |
         """)
         if company_info['summary']:
-            with st.expander("⬡  Company Description"):
+            with st.expander("  Company Description"):
                 st.write(company_info['summary'])
 
     with tab_charts:
@@ -997,15 +997,15 @@ if analyze:
             st.error(f"Technical Indicator Error: {e}")
 
     with tab_renko:
-        st.markdown('<div class="section-label">⬡ &nbsp;Renko Price Chart</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-label"> &nbsp;Renko Price Chart</div>', unsafe_allow_html=True)
         if renko_bricks and len(renko_bricks) > 0:
             try:
                 fig_renko = plot_renko(renko_bricks, renko_brick_size)
                 st.plotly_chart(fig_renko, width="stretch", config=CHART_CONFIG)
                 col1,col2,col3,col4 = st.columns(4)
                 with col1: st.metric("Total Bricks", renko_total_bricks)
-                with col2: st.metric("Up Bricks ▲", renko_up_bricks)
-                with col3: st.metric("Down Bricks ▼", renko_down_bricks)
+                with col2: st.metric("Up Bricks ", renko_up_bricks)
+                with col3: st.metric("Down Bricks ", renko_down_bricks)
                 with col4: st.metric("Brick Size", f"{renko_brick_size:.2f}")
             except Exception as e:
                 st.error(f"Renko chart error: {e}")
@@ -1015,7 +1015,7 @@ if analyze:
         else:
             st.warning("No Renko bricks available for display.")
 
-        with st.expander("⬡  What is Renko?"):
+        with st.expander("  What is Renko?"):
             st.markdown("""
 **Renko Charts** strip away time and focus purely on price movement.
 
@@ -1025,16 +1025,16 @@ if analyze:
             """)
 
     with tab_data:
-        st.markdown('<div class="section-label">⬡ &nbsp;Processed Indicator Data</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-label"> &nbsp;Processed Indicator Data</div>', unsafe_allow_html=True)
         st.dataframe(df_proc, width="stretch", hide_index=True)
-        with st.expander("⬡  Full column list"):
+        with st.expander("  Full column list"):
             st.write(list(df_proc.columns))
 
 # ── IDLE STATE ─────────────────────────────────────────────────────
 else:
     st.markdown("""
     <div style="text-align:center;padding:60px 0 20px;animation:fadeUp 0.6s ease both;">
-      <div style="font-size:48px;margin-bottom:16px;opacity:0.3;">⬡</div>
+      <div style="font-size:48px;margin-bottom:16px;opacity:0.3;"></div>
       <div style="font-family:'DM Mono',monospace;font-size:13px;color:#4a5568;
                   letter-spacing:0.2em;text-transform:uppercase;">
         Enter a ticker above and click Analyze
@@ -1043,7 +1043,7 @@ else:
     """, unsafe_allow_html=True)
 
     st.markdown('<hr>', unsafe_allow_html=True)
-    st.markdown('<div class="section-label">⬡ &nbsp;Quick Pick</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-label"> &nbsp;Quick Pick</div>', unsafe_allow_html=True)
     examples = st.columns(5)
     for col, ticker_ex in zip(examples, ["AAPL","TSLA","MSFT","GOOGL","NVDA"]):
         with col:

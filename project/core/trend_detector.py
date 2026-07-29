@@ -64,7 +64,7 @@ class TrendDetector:
                 "based_on_bars": 0
             }
 
-        # 🔥 USE EXACT LOOKBACK FROM DASHBOARD
+        #  USE EXACT LOOKBACK FROM DASHBOARD
         df = df.tail(self.lookback)
 
         up_count = 0

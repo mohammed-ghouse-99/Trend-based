@@ -20,23 +20,23 @@ def render_decision_banner(status: str, trend: str, ml_pred: int):
     
     if is_non_halal:
         color = "#ef4444" # Red
-        title = "❌ AVOID – NON-HALAL"
+        title = " AVOID – NON-HALAL"
         subtitle = "Equity fails Shariah financial or business criteria."
     elif not is_halal: # INSUFFICIENT or ERROR
         color = "#f59e0b" # Amber
-        title = "⚠️ WAIT – INCOMPLETE DATA"
+        title = " WAIT – INCOMPLETE DATA"
         subtitle = "Missing critical metrics to confirm compliance."
     elif is_bullish:
         color = "#10b981" # Green
-        title = "🚀 HALAL BUY"
+        title = " HALAL BUY"
         subtitle = "Compliant stock with strong bullish technical alignment."
     elif trend == "DOWNTREND":
         color = "#3b82f6" # Blue
-        title = "◆ VOID – BEARISH TREND"
+        title = " VOID – BEARISH TREND"
         subtitle = "Stock is Halal but current market structure is bearish."
     else:
         color = "#6b7280" # Gray
-        title = "⬡ WATCHLIST"
+        title = " WATCHLIST"
         subtitle = "Stock is Halal; waiting for clearer entry signals."
 
     st.markdown(f"""

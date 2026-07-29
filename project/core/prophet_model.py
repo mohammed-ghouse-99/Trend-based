@@ -77,10 +77,10 @@ class StockProphet:
         if df.index.name is not None:
             df = df.reset_index()
         
-        # ✅ DEFENSIVE CODING: Get FIRST column as date (whatever it's named)
+        #  DEFENSIVE CODING: Get FIRST column as date (whatever it's named)
         date_col = df.columns[0]  # First column = Date/Datetime
         
-        # ✅ Handle Close column - check if exists
+        #  Handle Close column - check if exists
         if 'Close' not in df.columns:
             raise ValueError("'Close' column not found in data")
         
@@ -267,5 +267,5 @@ def create_prophet_forecast(
         return forecast_df, forecast_info, trend, confidence
         
     except Exception as e:
-        print(f"⚠️ Prophet forecast error: {str(e)}")
+        print(f" Prophet forecast error: {str(e)}")
         return None, None, "ERROR", "LOW"

@@ -38,11 +38,11 @@ def check_root_directory():
     print(f"Project root should be:\n  {ROOT}")
 
     if str(ROOT) != os.getcwd():
-        print("❌ ERROR: You are NOT running from TrendProject root folder!")
-        print("➡ FIX: Run this command first:")
+        print(" ERROR: You are NOT running from TrendProject root folder!")
+        print(" FIX: Run this command first:")
         print(f"cd {ROOT}")
     else:
-        print("✔ OK: You are in the correct project root.")
+        print(" OK: You are in the correct project root.")
 
 
 def check_folders():
@@ -70,11 +70,11 @@ def check_python_path():
 
     if str(ROOT) not in sys.path:
         print("\n ERROR: Project root NOT in Python path!")
-        print("➡ FIX: Add this before running Streamlit:\n")
+        print(" FIX: Add this before running Streamlit:\n")
         print(f"export PYTHONPATH={ROOT}   # mac/linux")
         print(f"set PYTHONPATH={ROOT}      # windows")
     else:
-        print("\n✔ OK: Root folder is in Python path.")
+        print("\n OK: Root folder is in Python path.")
 
 
 def check_imports():
@@ -92,7 +92,7 @@ def check_imports():
     for module in modules_to_test:
         try:
             importlib.import_module(module)
-            print(f"✔ Import OK: {module}")
+            print(f" Import OK: {module}")
         except Exception as e:
             print(f" Import FAILED: {module}")
             print("  Reason:", e)
@@ -103,16 +103,16 @@ def check_dependencies():
     for dep in REQUIRED_DEPENDENCIES:
         try:
             importlib.import_module(dep)
-            print(f"✔ Found {dep}")
+            print(f" Found {dep}")
         except ImportError:
             print(f" MISSING {dep}")
-            print(f"➡ Run: pip install {dep}")
+            print(f" Run: pip install {dep}")
 
 
 def summary():
     print("\n\n==================== FINAL SUMMARY ====================")
     print("If ANY  appears above, fix it and re-run validator.")
-    print("When everything is ✔, Streamlit will work 100%.\n")
+    print("When everything is , Streamlit will work 100%.\n")
     print("To run app:")
     print("streamlit run project/app/dashboard.py")
     print("========================================================\n")
