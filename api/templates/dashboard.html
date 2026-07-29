@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX - Trend Intelligence Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+:root {
+  --ink: #060910; --surface: #0b0f1a; --panel: #0f1623; --panel2: #131c2e;
+  --border: rgba(201,168,76,0.14); --gold: #c9a84c; --gold-lt: #e8c97a;
+  --green: #10b981; --red: #ef4444; --amber: #f59e0b; --blue: #3b82f6;
+  --text: #e2e8f0; --muted: #4a5568; --muted2: #6b7280;
+  --mono: 'DM Mono', monospace; --display: 'Syne', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--ink); font-family: var(--display); color: var(--text); min-height: 100vh; }
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: linear-gradient(rgba(201,168,76,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201,168,76,0.025) 1px, transparent 1px);
+  background-size: 60px 60px; animation: gridScroll 40s linear infinite;
+}
+@keyframes gridScroll { from { background-position: 0 0; } to { background-position: 60px 60px; } }
+.main { position: relative; z-index: 1; max-width: 1600px; margin: 0 auto; padding: 1.5rem 2rem 3rem; }
+
+/* Header */
+.apex-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; background: var(--panel); border-bottom: 1px solid var(--border); border-radius: 0 0 16px 16px; margin-bottom: 2rem; box-shadow: 0 4px 40px rgba(0,0,0,0.6); }
+.apex-brand { display: flex; align-items: center; gap: 12px; }
+.apex-hex { width: 36px; height: 36px; background: linear-gradient(135deg, var(--gold), var(--gold-lt)); clip-path: polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--ink); font-weight: 800; box-shadow: 0 0 20px rgba(201,168,76,0.5); animation: hexPulse 3s ease-in-out infinite; }
+@keyframes hexPulse { 0%,100% { box-shadow: 0 0 16px rgba(201,168,76,0.4); } 50% { box-shadow: 0 0 32px rgba(201,168,76,0.75); } }
+.apex-wordmark { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+.apex-wordmark span { background: linear-gradient(135deg, var(--gold), var(--gold-lt)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.header-right { font-family: var(--mono); font-size: 11px; color: var(--muted2); display: flex; align-items: center; gap: 6px; }
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: blink 1.8s ease-in-out infinite; display: inline-block; margin-right: 6px; }
+@keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.25; } }
+
+/* Section */
+.section-label { font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.section-label::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+
+/* Input panel */
+.input-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 20px 24px; margin-bottom: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+.input-row { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; }
+.input-group { display: flex; flex-direction: column; gap: 4px; }
+.input-group label { font-family: var(--mono); font-size: 10px; color: var(--muted2); letter-spacing: 0.1em; text-transform: uppercase; }
+.input-group input, .input-group select { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: var(--mono); font-size: 14px; padding: 10px 14px; outline: none; transition: border-color 0.2s; }
+.input-group input:focus, .input-group select:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.1); }
+.input-group select { cursor: pointer; }
+.input-group.checkbox-group { flex-direction: row; align-items: center; gap: 8px; padding: 10px 0; }
+.input-group.checkbox-group label { cursor: pointer; }
+.input-group.checkbox-group input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--gold); cursor: pointer; }
+.btn-analyze { background: linear-gradient(135deg, #a07828 0%, var(--gold-lt) 50%, #a07828 100%); background-size: 200% 100%; color: var(--ink); font-family: var(--display); font-weight: 700; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; border: none; border-radius: 10px; padding: 12px 32px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 20px rgba(201,168,76,0.3); }
+.btn-analyze:hover { background-position: 100% 0; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(201,168,76,0.5); }
+
+/* Company header */
+.company-header { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 24px 28px; margin-bottom: 20px; box-shadow: 0 8px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden; display: flex; justify-content: space-between; align-items: center; }
+.company-header::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, var(--gold), transparent); }
+.company-info h1 { font-size: 26px; font-weight: 800; }
+.company-meta { font-family: var(--mono); font-size: 12px; color: var(--muted2); margin-top: 4px; }
+.price-container { display: flex; align-items: baseline; gap: 14px; }
+.price-main { font-size: 38px; font-weight: 800; font-family: var(--mono); letter-spacing: -0.02em; }
+.price-change { font-size: 15px; font-weight: 600; padding: 5px 14px; border-radius: 20px; font-family: var(--mono); }
+.price-up { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.25); }
+.price-down { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+
+/* Decision banner */
+.decision-banner { padding: 20px 24px; border-radius: 12px; margin-bottom: 25px; }
+.decision-title { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+.decision-subtitle { font-family: var(--mono); font-size: 13px; margin-top: 4px; color: #94a3b8; }
+
+/* Cards */
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 8px 40px rgba(0,0,0,0.5); }
+.card-title { font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+
+/* Layout */
+.columns-2 { display: grid; grid-template-columns: 2.3fr 1fr; gap: 24px; margin-bottom: 24px; }
+.columns-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.columns-2-equal { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* Gauges */
+.gauge-container { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+.gauge-label { font-family: var(--mono); font-size: 11px; color: var(--muted2); text-align: center; margin-top: 4px; letter-spacing: 0.08em; }
+
+/* Tables */
+table.tech-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 13px; }
+table.tech-table th { background: var(--panel2); color: var(--gold-lt); font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+table.tech-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+table.tech-table tr:hover td { background: var(--panel2); }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; background: var(--panel); border-radius: 12px; padding: 6px; border: 1px solid var(--border); margin-bottom: 0; }
+.tab-btn { background: transparent; border: none; border-radius: 8px; color: var(--muted2); font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: 0.08em; padding: 8px 20px; cursor: pointer; transition: all 0.2s; }
+.tab-btn:hover { color: var(--text); background: var(--panel2); }
+.tab-btn.active { background: linear-gradient(135deg, rgba(201,168,76,0.2), rgba(201,168,76,0.08)); color: var(--gold-lt); border: 1px solid var(--border); }
+.tab-content { background: var(--panel); border: 1px solid var(--border); border-radius: 0 12px 12px 12px; padding: 24px; margin-top: 2px; }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* Quick pick */
+.quick-pick { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+.quick-pick button { background: var(--panel2); color: var(--gold); border: 1px solid var(--border); border-radius: 10px; font-family: var(--display); font-weight: 600; font-size: 14px; padding: 10px 24px; cursor: pointer; transition: all 0.2s; }
+.quick-pick button:hover { background: rgba(201,168,76,0.08); border-color: var(--gold); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(201,168,76,0.2); }
+
+/* Signal indicators */
+.signal-up { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.25); padding: 8px 16px; border-radius: 8px; font-family: var(--mono); font-size: 12px; margin-bottom: 8px; }
+.signal-down { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.25); padding: 8px 16px; border-radius: 8px; font-family: var(--mono); font-size: 12px; margin-bottom: 8px; }
+.signal-neutral { background: rgba(245,158,11,0.12); color: var(--amber); border: 1px solid rgba(245,158,11,0.25); padding: 8px 16px; border-radius: 8px; font-family: var(--mono); font-size: 12px; margin-bottom: 8px; }
+.signal-info { background: rgba(59,130,246,0.1); color: #60a5fa; border: 1px solid rgba(59,130,246,0.25); padding: 8px 16px; border-radius: 8px; font-family: var(--mono); font-size: 12px; margin-bottom: 8px; }
+
+/* Halal scorecard */
+.ratio-bar { margin-bottom: 14px; }
+.ratio-header { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; margin-bottom: 6px; }
+.ratio-header span:first-child { color: #94a3b8; }
+.ratio-track { background: #1e293b; height: 6px; border-radius: 3px; overflow: hidden; }
+.ratio-fill { height: 100%; transition: width 0.6s ease; }
+
+/* Volume card */
+.volume-card { background: var(--panel2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.volume-label { font-family: var(--mono); font-size: 10px; color: var(--muted2); margin-bottom: 8px; text-transform: uppercase; }
+.volume-value { font-size: 18px; font-weight: 600; color: white; }
+.volume-sub { color: var(--muted2); font-size: 11px; margin-top: 4px; }
+
+hr { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
+/* Loading */
+.loading { text-align: center; padding: 40px; color: var(--muted2); font-family: var(--mono); font-size: 13px; }
+.spinner { width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Stats info box */
+.stats-info { color: #60a5fa; background: rgba(59,130,246,0.1); padding: 8px 12px; border-radius: 8px; font-family: var(--mono); font-size: 11px; border-left: 3px solid #3b82f6; }
+
+.hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="main">
+  <!-- HEADER -->
+  <div class="apex-header">
+    <div class="apex-brand">
+      <div class="apex-hex">&#x2B21;</div>
+      <div>
+        <div class="apex-wordmark"><span>Trend-Based</span> Halal Stock Prediction System</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="live-dot"></span> LIVE &nbsp;&middot;&nbsp; <span id="clock"></span>
+      <a href="/api/logout" style="color:var(--muted2);text-decoration:none;margin-left:12px;font-size:11px;">&#x2715; Logout</a>
+    </div>
+  </div>
+
+  <!-- INPUT PANEL -->
+  <div class="section-label">&#x2B21; &nbsp;Market Parameters</div>
+  <div class="input-panel">
+    <form id="analyze-form" onsubmit="return analyze()">
+    <div class="input-row">
+      <div class="input-group">
+        <label>Ticker</label>
+        <input type="text" id="ticker" value="AAPL" style="width:100px;text-transform:uppercase">
+      </div>
+      <div class="input-group">
+        <label>Data Period</label>
+        <select id="period">
+          <option value="1y">1y</option>
+          <option value="2y">2y</option>
+          <option value="3y" selected>3y</option>
+          <option value="5y">5y</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Interval</label>
+        <select id="interval">
+          <option value="1d" selected>1d</option>
+          <option value="1h">1h</option>
+          <option value="30m">30m</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Trend Lookback</label>
+        <select id="trend_period">
+          <option value="6mo">6mo</option>
+          <option value="1y" selected>1y</option>
+          <option value="2y">2y</option>
+        </select>
+      </div>
+      <div class="input-group checkbox-group">
+        <input type="checkbox" id="use_cache" checked>
+        <label for="use_cache">Cache</label>
+      </div>
+      <div class="input-group checkbox-group">
+        <input type="checkbox" id="refresh">
+        <label for="refresh">Fresh</label>
+      </div>
+      <div class="input-group checkbox-group">
+        <input type="checkbox" id="check_halal" checked>
+        <label for="halal">Halal</label>
+      </div>
+      <button type="submit" class="btn-analyze">&#x2B21; Analyze</button>
+    </div>
+    </form>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results" class="hidden">
+    <div id="decision-banner"></div>
+
+    <div class="columns-2">
+      <div id="left-col">
+        <div id="company-header"></div>
+        <div id="price-chart"></div>
+      </div>
+      <div id="right-col">
+        <div id="halal-card" class="card"></div>
+        <hr>
+        <div class="card" id="signals-card">
+          <div class="card-title">&#x2B21; &nbsp;Market Context</div>
+          <div id="signals"></div>
+        </div>
+        <hr>
+        <div id="volume-card"></div>
+      </div>
+    </div>
+
+    <hr>
+    <div class="section-label">&#x2B21; &nbsp;Technical Summary</div>
+    <div class="columns-3" id="gauges"></div>
+
+    <hr>
+    <div class="columns-2-equal">
+      <div>
+        <div class="section-label">&#x2B21; &nbsp;Oscillators</div>
+        <div id="osc-table"></div>
+      </div>
+      <div>
+        <div class="section-label">&#x2B21; &nbsp;Moving Averages</div>
+        <div id="ma-table"></div>
+      </div>
+    </div>
+
+    <hr>
+    <div class="tabs" id="tabs">
+      <button class="tab-btn active" data-tab="overview">&#x2B21; Overview</button>
+      <button class="tab-btn" data-tab="charts">&#x2B21; Charts</button>
+      <button class="tab-btn" data-tab="renko">&#x2B21; Renko</button>
+      <button class="tab-btn" data-tab="data">&#x2B21; Data</button>
+    </div>
+    <div class="tab-content">
+      <div class="tab-pane active" id="tab-overview"><div id="overview-content"></div></div>
+      <div class="tab-pane" id="tab-charts">
+        <div id="chart-rsi"></div>
+        <div id="chart-macd"></div>
+        <div id="chart-volume"></div>
+      </div>
+      <div class="tab-pane" id="tab-renko"><div id="renko-content"></div></div>
+      <div class="tab-pane" id="tab-data"><div id="data-msg" class="stats-info">Processed indicator data available in API response.</div></div>
+    </div>
+  </div>
+
+  <!-- IDLE STATE -->
+  <div id="idle-state">
+    <div style="text-align:center;padding:60px 0 20px;">
+      <div style="font-size:48px;margin-bottom:16px;opacity:0.3;">&#x2B21;</div>
+      <div style="font-family:'DM Mono',monospace;font-size:13px;color:#4a5568;letter-spacing:0.2em;text-transform:uppercase;">
+        Enter a ticker above and click Analyze
+      </div>
+    </div>
+    <hr>
+    <div class="section-label">&#x2B21; &nbsp;Quick Pick</div>
+    <div class="quick-pick">
+      <button onclick="quickPick('AAPL')">AAPL</button>
+      <button onclick="quickPick('TSLA')">TSLA</button>
+      <button onclick="quickPick('MSFT')">MSFT</button>
+      <button onclick="quickPick('GOOGL')">GOOGL</button>
+      <button onclick="quickPick('NVDA')">NVDA</button>
+    </div>
+  </div>
+
+  <div id="loading" class="loading hidden">
+    <div class="spinner"></div>
+    Processing market data&#x2026;
+  </div>
+</div>
+
+<script>
+function updateClock() {
+  document.getElementById('clock').textContent = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + '  ' + new Date().toTimeString().slice(0,5);
+}
+setInterval(updateClock, 1000); updateClock();
+
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+  });
+});
+
+function quickPick(ticker) {
+  document.getElementById('ticker').value = ticker;
+  analyze();
+}
+
+function showLoading(show) {
+  document.getElementById('loading').classList.toggle('hidden', !show);
+  document.getElementById('idle-state').classList.toggle('hidden', show);
+  document.getElementById('results').classList.toggle('hidden', show);
+}
+
+function makeGauge(containerId, value, label, subtitle) {
+  const data = [{
+    type: "indicator", mode: "gauge+number+delta",
+    value: value, number: { suffix: "", font: { size: 24, color: "white" } },
+    title: { text: label, font: { size: 15, color: "#e8c97a" } },
+    gauge: {
+      axis: { range: [0, 100], visible: false },
+      bar: { color: "white", thickness: 0.18 },
+      bgcolor: "rgba(0,0,0,0)", borderwidth: 0,
+      steps: [
+        { range: [0, 20], color: "#7f1d1d" },
+        { range: [20, 40], color: "#dc2626" },
+        { range: [40, 60], color: "#374151" },
+        { range: [60, 80], color: "#059669" },
+        { range: [80, 100], color: "#10b981" },
+      ],
+      threshold: { line: { color: "#e8c97a", width: 3 }, thickness: 0.75, value: value },
+      shape: "angular"
+    },
+    domain: { x: [0, 1], y: [0, 1] },
+    delta: { reference: 50, increasing: { color: "#10b981" }, decreasing: { color: "#ef4444" } }
+  }];
+  const layout = {
+    margin: { l: 10, r: 10, t: 40, b: 50 }, height: 220,
+    paper_bgcolor: "rgba(0,0,0,0)", font: { color: "white" },
+    plot_bgcolor: "rgba(0,0,0,0)",
+    annotations: subtitle ? [{ text: subtitle, x: 0.5, y: -0.05, showarrow: false, font: { size: 10, color: "#6b7280" } }] : []
+  };
+  Plotly.newPlot(containerId, data, layout, { displayModeBar: false, responsive: true });
+}
+
+function renderSignal(data) {
+  const h = data.halal || {};
+  const t = data.technicals || {};
+  const isHalal = h.status === "COMPLIANT";
+  const isNonHalal = h.status === "NON_COMPLIANT";
+  const isBullish = (t.trend === "UPTREND") && (t.ml_prediction === 1);
+
+  let color, title, subtitle;
+  if (isNonHalal) { color = "#ef4444"; title = "AVOID - NON-HALAL"; subtitle = "Equity fails Shariah financial or business criteria."; }
+  else if (h.status !== "COMPLIANT") { color = "#f59e0b"; title = "WAIT - INCOMPLETE DATA"; subtitle = "Missing critical metrics to confirm compliance."; }
+  else if (isBullish) { color = "#10b981"; title = "HALAL BUY"; subtitle = "Compliant stock with strong bullish technical alignment."; }
+  else if (t.trend === "DOWNTREND") { color = "#3b82f6"; title = "VOID - BEARISH TREND"; subtitle = "Stock is Halal but current market structure is bearish."; }
+  else { color = "#6b7280"; title = "WATCHLIST"; subtitle = "Stock is Halal; waiting for clearer entry signals."; }
+
+  document.getElementById('decision-banner').innerHTML =
+    `<div class="decision-banner" style="background:linear-gradient(90deg,${color}22 0%,transparent 100%);border-left:5px solid ${color};border:1px solid ${color}44;">
+      <div class="decision-title" style="color:${color};">${title}</div>
+      <div class="decision-subtitle">${subtitle}</div>
+    </div>`;
+}
+
+function renderCompany(data) {
+  const c = data.company || {};
+  const p = data.price || {};
+  document.getElementById('company-header').innerHTML =
+    `<div class="company-header">
+      <div class="company-info">
+        <h1>${c.name || data.ticker}</h1>
+        <div class="company-meta"><span style="color:var(--gold);font-weight:600;">${c.exchange || ''}</span> &nbsp;&middot;&nbsp; ${c.sector || ''} &nbsp;&middot;&nbsp; ${c.country || ''}</div>
+      </div>
+      <div class="price-container">
+        <span class="price-main">${p.last.toLocaleString('en-US', {minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+        <span class="price-change ${p.is_positive ? 'price-up' : 'price-down'}">${p.change >= 0 ? '+' : ''}${p.change.toFixed(2)} (${p.change_pct >= 0 ? '+' : ''}${p.change_pct.toFixed(2)}%)</span>
+      </div>
+    </div>`;
+}
+
+function renderHalal(data) {
+  const h = data.halal || {};
+  const statusColors = { COMPLIANT: "#10b981", NON_COMPLIANT: "#ef4444", INSUFFICIENT_DATA: "#f59e0b", ERROR: "#6b7280" };
+  const color = statusColors[h.status] || "#6b7280";
+  let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+    <div class="card-title" style="margin:0;padding:0;border:none;">Halal Compliance Audit</div>
+    <div style="background:${color}22;color:${color};padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid ${color}44;">${h.status}</div>
+  </div>`;
+  const ratios = h.ratios || {};
+  for (const [label, key, limit] of [["Debt Ratio", "debt_ratio", 0.33], ["Interest Ratio", "interest_ratio", 0.05], ["Liquidity Ratio", "liquidity_ratio", 0.50]]) {
+    const val = ratios[key];
+    if (val !== undefined && val !== null) {
+      const pct = Math.min((val / (limit * 1.5)) * 100, 100);
+      const clr = val < limit ? "#10b981" : "#ef4444";
+      html += `<div class="ratio-bar">
+        <div class="ratio-header"><span>${label}</span><span style="color:${clr};font-weight:600;">${(val*100).toFixed(2)}% <span style="color:#4b5563;font-weight:400;">/ ${(limit*100).toFixed(0)}% limit</span></span></div>
+        <div class="ratio-track"><div class="ratio-fill" style="background:${clr};width:${pct}%"></div></div>
+      </div>`;
+    } else {
+      html += `<div class="ratio-bar">
+        <div class="ratio-header"><span>${label}</span><span style="color:#4b5563;">N/A</span></div>
+        <div class="ratio-track"><div class="ratio-fill" style="background:#4b5563;width:0%"></div></div>
+      </div>`;
+    }
+  }
+  document.getElementById('halal-card').innerHTML = html;
+}
+
+function renderSignals(data) {
+  const t = data.technicals || {};
+  let html = '';
+  if (t.trend === "UPTREND") html += `<div class="signal-up">&#x25B2; BULLISH SIGNAL (Conf: ${t.trend_confidence.toFixed(2)})</div>`;
+  else if (t.trend === "DOWNTREND") html += `<div class="signal-down">&#x25BC; BEARISH SIGNAL (Conf: ${t.trend_confidence.toFixed(2)})</div>`;
+  else html += `<div class="signal-neutral">&#x25C6; NEUTRAL / SIDEWAYS</div>`;
+
+  if (t.ml_prediction === 1) html += `<div class="signal-up">&#x1F680; ML: UP PROBABILITY (${(t.ml_confidence*100).toFixed(0)}%)</div>`;
+  else html += `<div class="signal-info">&#x2696;&#xFE0F; ML: NO UP SIGNAL (${(t.ml_confidence*100).toFixed(0)}%)</div>`;
+
+  if (t.renko_trend === "UPTREND") html += `<div class="signal-up">&#x1F9F1; RENKO: ${t.renko_total_bricks} UP BRICKS</div>`;
+  else if (t.renko_trend === "DOWNTREND") html += `<div class="signal-down">&#x1F9F1; RENKO: ${t.renko_total_bricks} DOWN BRICKS</div>`;
+
+  document.getElementById('signals').innerHTML = html;
+}
+
+function renderVolume(data) {
+  document.getElementById('volume-card').innerHTML =
+    `<div class="volume-card">
+      <div class="volume-label">Volume Profile</div>
+      <div class="volume-value">${data.volume.toLocaleString()}</div>
+      <div class="volume-sub">24h Turnover</div>
+    </div>`;
+}
+
+function renderTables(data) {
+  const osc = data.tables?.oscillators || [];
+  const ma = data.tables?.moving_averages || [];
+  let oh = '<table class="tech-table"><thead><tr><th>Indicator</th><th>Value</th><th>Signal</th></tr></thead><tbody>';
+  osc.forEach(r => { oh += `<tr><td>${r.label}</td><td>${r.value}</td><td style="color:${r.signal.includes('Buy')?'var(--green)':r.signal.includes('Sell')?'var(--red)':'var(--muted2)'}">${r.signal}</td></tr>`; });
+  oh += '</tbody></table>';
+  document.getElementById('osc-table').innerHTML = oh;
+
+  let mh = '<table class="tech-table"><thead><tr><th>MA</th><th>Value</th><th>Signal</th></tr></thead><tbody>';
+  ma.forEach(r => { mh += `<tr><td>${r.label}</td><td>${r.value}</td><td style="color:${r.signal.includes('Buy')?'var(--green)':r.signal.includes('Sell')?'var(--red)':'var(--muted2)'}">${r.signal}</td></tr>`; });
+  mh += '</tbody></table>';
+  document.getElementById('ma-table').innerHTML = mh;
+}
+
+function renderGauges(data) {
+  const g = data.gauges || {};
+  document.getElementById('gauges').innerHTML =
+    `<div class="gauge-container"><div id="gauge-osc"></div><div class="gauge-label">Dominant: <b style="color:var(--gold-lt)">${g.oscillator?.label || 'N/A'}</b></div></div>
+     <div class="gauge-container"><div id="gauge-summary"></div><div class="gauge-label">Dominant: <b style="color:var(--gold-lt)">${g.summary?.label || 'N/A'}</b></div></div>
+     <div class="gauge-container"><div id="gauge-ma"></div><div class="gauge-label">Dominant: <b style="color:var(--gold-lt)">${g.ma?.label || 'N/A'}</b></div></div>`;
+  setTimeout(() => {
+    makeGauge('gauge-osc', g.oscillator?.value || 50, 'Oscillators');
+    makeGauge('gauge-summary', g.summary?.value || 50, 'Summary');
+    makeGauge('gauge-ma', g.ma?.value || 50, 'Moving Averages');
+  }, 50);
+}
+
+function renderCharts(data) {
+  const charts = data.charts || {};
+  if (charts.candlestick) Plotly.newPlot('price-chart', charts.candlestick.data, charts.candlestick.layout, { displayModeBar: false, responsive: true });
+  if (charts.rsi) Plotly.newPlot('chart-rsi', charts.rsi.data, charts.rsi.layout, { displayModeBar: false, responsive: true });
+  if (charts.macd) Plotly.newPlot('chart-macd', charts.macd.data, charts.macd.layout, { displayModeBar: false, responsive: true });
+  if (charts.volume) Plotly.newPlot('chart-volume', charts.volume.data, charts.volume.layout, { displayModeBar: false, responsive: true });
+  if (charts.renko) Plotly.newPlot('renko-content', charts.renko.data, charts.renko.layout, { displayModeBar: false, responsive: true });
+}
+
+function renderOverview(data) {
+  const c = data.company || {};
+  const t = data.technicals || {};
+  document.getElementById('overview-content').innerHTML = `
+    <table class="tech-table">
+      <thead><tr><th>Field</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td><b>Ticker</b></td><td><code>${data.ticker}</code></td></tr>
+        <tr><td><b>Company</b></td><td>${c.name || data.ticker}</td></tr>
+        <tr><td><b>Sector</b></td><td>${c.sector || 'N/A'}</td></tr>
+        <tr><td><b>Exchange</b></td><td>${c.exchange || 'N/A'}</td></tr>
+        <tr><td><b>Period</b></td><td>${data.period}</td></tr>
+        <tr><td><b>Interval</b></td><td>${data.interval}</td></tr>
+        <tr><td><b>Rows</b></td><td>${data.rows?.toLocaleString() || 'N/A'}</td></tr>
+        <tr><td><b>Last Close</b></td><td><code>$${(data.price?.last || 0).toFixed(2)}</code></td></tr>
+      </tbody>
+    </table>`;
+}
+
+function renderRenko(data) {
+  const t = data.technicals || {};
+  if (t.renko_total_bricks > 0) {
+    document.getElementById('renko-content').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px;">
+        <div class="gauge-container"><div style="font-family:var(--mono);font-size:11px;color:var(--muted2);text-align:center;">Total Bricks</div><div style="font-family:var(--mono);font-size:24px;color:white;text-align:center;">${t.renko_total_bricks}</div></div>
+        <div class="gauge-container"><div style="font-family:var(--mono);font-size:11px;color:var(--muted2);text-align:center;">Up Bricks &#x25B2;</div><div style="font-family:var(--mono);font-size:24px;color:var(--green);text-align:center;">${t.renko_up_bricks}</div></div>
+        <div class="gauge-container"><div style="font-family:var(--mono);font-size:11px;color:var(--muted2);text-align:center;">Down Bricks &#x25BC;</div><div style="font-family:var(--mono);font-size:24px;color:var(--red);text-align:center;">${t.renko_down_bricks}</div></div>
+        <div class="gauge-container"><div style="font-family:var(--mono);font-size:11px;color:var(--muted2);text-align:center;">Brick Size</div><div style="font-family:var(--mono);font-size:24px;color:var(--gold-lt);text-align:center;">${t.renko_brick_size.toFixed(2)}</div></div>
+      </div>`;
+  } else {
+    document.getElementById('renko-content').innerHTML = '<div class="signal-neutral">No Renko bricks available for display.</div>';
+  }
+}
+
+async function analyze() {
+  const ticker = document.getElementById('ticker').value.trim().toUpperCase() || 'AAPL';
+  const period = document.getElementById('period').value;
+  const interval = document.getElementById('interval').value;
+  const trendPeriod = document.getElementById('trend_period').value;
+  const useCache = document.getElementById('use_cache').checked;
+  const refresh = document.getElementById('refresh').checked;
+  const checkHalal = document.getElementById('check_halal').checked;
+
+  showLoading(true);
+
+  try {
+    const params = new URLSearchParams({ ticker, period, interval, trend_period: trendPeriod, use_cache: useCache, refresh, check_halal: checkHalal });
+    const resp = await fetch('/api/analyze?' + params.toString());
+    if (resp.redirected) { window.location.href = resp.url; return; }
+    const data = await resp.json();
+    if (data.error) { alert('Error: ' + data.error); showLoading(false); return; }
+
+    renderSignal(data);
+    renderCompany(data);
+    renderHalal(data);
+    renderSignals(data);
+    renderVolume(data);
+    renderTables(data);
+    renderGauges(data);
+    renderCharts(data);
+    renderOverview(data);
+    renderRenko(data);
+
+    document.getElementById('results').classList.remove('hidden');
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) {
+    alert('Request failed: ' + e.message);
+  }
+  showLoading(false);
+  return false;
+}
+
+// Auto-run on load if ticker in URL
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('ticker')) {
+  document.getElementById('ticker').value = urlParams.get('ticker').toUpperCase();
+  analyze();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+# --- Core ---
+pandas
+numpy
+yfinance
+requests
+
+# --- ML / Feature Engineering ---
+scikit-learn
+xgboost
+joblib
+ta
+
+# --- Visualization ---
+plotly
+matplotlib
+
+# --- API (replaces Streamlit) ---
+fastapi
+python-jose[cryptography]
+jinja2
+python-multipart
+
+# --- Performance & Utilities ---
+pydantic
+python-dotenv
+loguru

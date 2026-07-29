@@ -18,7 +18,9 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-CACHE_DIR = Path.cwd() / "project_cache"  # created at project root
+import os as _os
+_VERCEL = _os.environ.get("VERCEL") == "1"
+CACHE_DIR = Path(_os.environ.get("CACHE_DIR", "/tmp/project_cache" if _VERCEL else str(Path.cwd() / "project_cache")))
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
